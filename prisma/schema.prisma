@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model User {
+  id               String            @id @default(uuid())
+  email            String            @unique
+  name             String
+  surname          String
+  address          String
+  password         String
+  isOrganizer      Boolean
+  events           Event[]
+  eventAttendances EventAttendance[]
+  firebaseId       String
+}
+
+model Event {
+  id               String            @id @default(uuid())
+  title            String
+  description      String
+  date             DateTime
+  place            String
+  author           User              @relation(fields: [userId], references: [id])
+  userId           String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  eventAttendances EventAttendance[]
+  maxCapacity      Int
+}
+
+model EventAttendance {
+  id      String @id @default(uuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+}
+
+// enum Role {
+//   BASIC
+//   ORGANIZER
+// }
