@@ -4,7 +4,7 @@ import type { Request, Response } from 'express';
 import * as EventService from './events.service';
 import * as UserService from '../user/user.service';
 
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 import { validateRequestSchema } from '../../middleware/validate-request-schema';
 import { authMiddleware } from '../../middleware/authMiddleware';
 import { CreateEventBody, EditEventBody } from './events.service';
@@ -50,43 +50,58 @@ type GetEventsResult = (Event & {
 })[];
 
 //GET: All events
-eventRouter.get('/', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const events = await EventService.getAllEvents();
-    const result: GetEventsResult = events.map(
-      ({
-        createdAt,
-        date,
-        description,
-        eventAttendances,
-        id,
-        maxCapacity,
-        place,
-        title,
-        updatedAt,
-        userId,
-      }) => ({
-        createdAt,
-        date,
-        description,
-        id,
-        maxCapacity,
-        place,
-        title,
-        updatedAt,
-        userId,
-        numberOfAttendees: eventAttendances.length,
-      })
-    );
+eventRouter.get(
+  '/m',
+  authMiddleware,
+  param('skip').isNumeric(),
+  param('numberOfEvents').isNumeric(),
+  async (req: Request, res: Response) => {
+    try {
+      const { skip, numberOfEvents } = req.query;
+      const events = await EventService.getAllEvents({
+        numberOfEvents: Number(numberOfEvents),
+        skip: Number(skip),
+      });
+      const eventsCount = await EventService.getAllEventsCount();
 
-    if (events) {
-      return res.status(200).json(result);
+      const result: { events: GetEventResult[]; totalCount: number } = {
+        events: events.map(
+          ({
+            createdAt,
+            date,
+            description,
+            eventAttendances,
+            id,
+            maxCapacity,
+            place,
+            title,
+            updatedAt,
+            userId,
+          }) => ({
+            createdAt,
+            date,
+            description,
+            id,
+            maxCapacity,
+            place,
+            title,
+            updatedAt,
+            userId,
+            numberOfAttendees: eventAttendances.length,
+          })
+        ),
+        totalCount: eventsCount,
+      };
+
+      if (events) {
+        return res.status(200).json(result);
+      }
+      return res.status(404).json('Events could not be found');
+    } catch (error: any) {
+      return res.status(500).json(error.message);
     }
-    return res.status(404).json('Events could not be found');
-  } catch (error: any) {
-    return res.status(500).json(error.message);
   }
-});
+);
 //GET: attending events ids
 eventRouter.get(
   '/my-events-ids',
@@ -114,6 +129,7 @@ eventRouter.get(
   authMiddleware,
   body('userId').isString(),
   async (req: Request, res: Response) => {
+    // console.log('req', req.body);
     try {
       const { userId } = req.body;
       const attendingEventsByUser =
@@ -121,6 +137,26 @@ eventRouter.get(
 
       if (attendingEventsByUser) {
         return res.status(200).json(attendingEventsByUser);
+      }
+      return res.status(404).json('Events could not be found');
+    } catch (error: any) {
+      return res.status(500).json(error.message);
+    }
+  }
+);
+
+eventRouter.get(
+  '/filter',
+  authMiddleware,
+  body('title').isString(),
+  async (req: Request, res: Response) => {
+    try {
+      const { title } = req.body;
+
+      const events = await EventService.filterEventByName(title);
+
+      if (events) {
+        return res.status(200).json(events);
       }
       return res.status(404).json('Events could not be found');
     } catch (error: any) {
@@ -287,5 +323,7 @@ eventRouter.delete(
     }
   }
 );
+
+//filter events by name
 
 export default eventRouter;

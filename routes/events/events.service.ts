@@ -29,12 +29,23 @@ export const createEvent = async ({
   });
 };
 
-export const getAllEvents = async () => {
+export const getAllEvents = async ({
+  skip,
+  numberOfEvents,
+}: {
+  skip: number;
+  numberOfEvents: number;
+}) => {
   return db.event.findMany({
     include: {
       eventAttendances: true,
     },
+    skip: skip,
+    take: numberOfEvents,
   });
+};
+export const getAllEventsCount = async () => {
+  return db.event.count();
 };
 
 export const getEventWithAttendances = async (id: string) => {
@@ -73,12 +84,17 @@ export const getAttendingEventIdsByUserId = async (userId: string) => {
 };
 
 export const getAttendingEventsByUserId = async (userId: string) => {
-  const eventAttendances = await db.eventAttendance.findMany({
+  const events = await db.event.findMany({
     where: {
-      userId,
+      eventAttendances: {
+        some: {
+          userId,
+        },
+      },
     },
   });
-  return eventAttendances;
+
+  return events;
 };
 
 export const logoutFromEvent = async ({
@@ -152,4 +168,17 @@ export const deleteEvent = async ({ eventId }: { eventId: string }) => {
       id: eventId,
     },
   });
+};
+
+export const filterEventByName = async (title: string) => {
+  const events = await db.event.findMany({
+    where: {
+      title: {
+        contains: title,
+        mode: 'insensitive',
+      },
+    },
+  });
+
+  return events;
 };
