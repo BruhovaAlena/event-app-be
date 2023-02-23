@@ -1,14 +1,12 @@
 import express from 'express';
 import type { Request, Response } from 'express';
-
 import * as EventService from './events.service';
 import * as UserService from '../user/user.service';
-
 import { body, param } from 'express-validator';
 import { validateRequestSchema } from '../../middleware/validate-request-schema';
 import { authMiddleware } from '../../middleware/authMiddleware';
 import { CreateEventBody, EditEventBody } from './events.service';
-import { Event } from '@prisma/client';
+import { Event, Prisma } from '@prisma/client';
 
 const eventRouter = express.Router();
 
@@ -51,18 +49,34 @@ type GetEventsResult = (Event & {
 
 //GET: All events
 eventRouter.get(
-  '/m',
+  '/',
   authMiddleware,
-  param('skip').isNumeric(),
-  param('numberOfEvents').isNumeric(),
+  param('skip').isNumeric().optional(),
+  param('numberOfEvents').isNumeric().optional(),
+  param('searchTitle').isString().optional(),
+  param('filterByDate').isString().optional(),
+  param('orderByDate').isString().optional(),
   async (req: Request, res: Response) => {
     try {
-      const { skip, numberOfEvents } = req.query;
+      const { skip, numberOfEvents, searchTitle, filterByDate, orderByDate } =
+        req.query as {
+          skip: string | undefined;
+          numberOfEvents: string | undefined;
+          searchTitle: string | undefined;
+          filterByDate: string | undefined;
+          orderByDate: Prisma.SortOrder;
+        };
       const events = await EventService.getAllEvents({
-        numberOfEvents: Number(numberOfEvents),
-        skip: Number(skip),
+        numberOfEvents,
+        skip,
+        searchTitle,
+        filterByDate,
+        orderByDate,
       });
-      const eventsCount = await EventService.getAllEventsCount();
+      const eventsCount = await EventService.getAllEventsCount({
+        filterByDate,
+        searchTitle,
+      });
 
       const result: { events: GetEventResult[]; totalCount: number } = {
         events: events.map(
@@ -323,7 +337,4 @@ eventRouter.delete(
     }
   }
 );
-
-//filter events by name
-
 export default eventRouter;
