@@ -1,4 +1,6 @@
+import { Prisma } from '@prisma/client';
 import { db } from '../../utils/db.server';
+import { getEventsByDate } from '../../utils/getEventsByDate';
 
 export type CreateEventBody = {
   title: string;
@@ -32,20 +34,57 @@ export const createEvent = async ({
 export const getAllEvents = async ({
   skip,
   numberOfEvents,
+  searchTitle,
+  filterByDate,
+  orderByDate,
 }: {
-  skip: number;
-  numberOfEvents: number;
+  skip: string | undefined;
+  numberOfEvents: string | undefined;
+  searchTitle: string | undefined;
+  filterByDate: string | undefined;
+  orderByDate: Prisma.SortOrder;
 }) => {
   return db.event.findMany({
     include: {
       eventAttendances: true,
     },
-    skip: skip,
-    take: numberOfEvents,
+    orderBy: {
+      date: orderByDate,
+    },
+    skip: skip ? Number(skip) : undefined,
+    take: numberOfEvents ? Number(numberOfEvents) : undefined,
+    where: {
+      title: {
+        contains: searchTitle ? searchTitle : undefined,
+        mode: 'insensitive',
+      },
+      date: {
+        lte: getEventsByDate(filterByDate),
+        gte: new Date(),
+      },
+    },
   });
 };
-export const getAllEventsCount = async () => {
-  return db.event.count();
+
+export const getAllEventsCount = async ({
+  searchTitle,
+  filterByDate,
+}: {
+  searchTitle: string | undefined;
+  filterByDate: string | undefined;
+}) => {
+  return db.event.count({
+    where: {
+      title: {
+        contains: searchTitle ? searchTitle : undefined,
+        mode: 'insensitive',
+      },
+      date: {
+        lte: getEventsByDate(filterByDate),
+        gte: new Date(),
+      },
+    },
+  });
 };
 
 export const getEventWithAttendances = async (id: string) => {
