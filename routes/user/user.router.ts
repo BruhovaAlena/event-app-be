@@ -43,7 +43,7 @@ userRouter.post(
           if (user) {
             return res.status(201).json(user);
           }
-          return res.status(401).json('user could not be created');
+          return res.status(401).json('User could not be created');
         }
       }
     } catch (error: any) {

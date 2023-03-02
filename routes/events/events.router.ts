@@ -36,7 +36,7 @@ eventRouter.post(
       if (newEvent) {
         return res.status(201).json(newEvent);
       }
-      return res.status(404).json('Event could not be created');
+      return res.status(404).json('Event could not be created.');
     } catch (error: any) {
       return res.status(500).json(error.message);
     }
@@ -110,12 +110,13 @@ eventRouter.get(
       if (events) {
         return res.status(200).json(result);
       }
-      return res.status(404).json('Events could not be found');
+      return res.status(404).json('Events could not be found.');
     } catch (error: any) {
       return res.status(500).json(error.message);
     }
   }
 );
+
 //GET: attending events ids
 eventRouter.get(
   '/my-events-ids',
@@ -130,7 +131,7 @@ eventRouter.get(
       if (attendingEventsByUser) {
         return res.status(200).json(attendingEventsByUser);
       }
-      return res.status(404).json('Events could not be found');
+      return res.status(404).json('Attending events ids could not be found.');
     } catch (error: any) {
       return res.status(500).json(error.message);
     }
@@ -152,7 +153,7 @@ eventRouter.get(
       if (attendingEventsByUser) {
         return res.status(200).json(attendingEventsByUser);
       }
-      return res.status(404).json('Events could not be found');
+      return res.status(404).json('Attending events could not be found.');
     } catch (error: any) {
       return res.status(500).json(error.message);
     }
@@ -172,7 +173,7 @@ eventRouter.get(
       if (events) {
         return res.status(200).json(events);
       }
-      return res.status(404).json('Events could not be found');
+      return res.status(404).json('Events could not be found.');
     } catch (error: any) {
       return res.status(500).json(error.message);
     }
@@ -180,7 +181,6 @@ eventRouter.get(
 );
 
 // GET: A single event by ID
-
 type GetEventResult = Event & {
   numberOfAttendees: number;
 };
@@ -226,6 +226,7 @@ eventRouter.get(
     }
   }
 );
+
 //POST: Login to event
 eventRouter.post(
   '/login',
@@ -248,7 +249,7 @@ eventRouter.post(
         if (eventAttendance) {
           return res.status(200).json(eventAttendance);
         }
-        return res.status(404).json('Events could not be found');
+        return res.status(404).json('Log to event could not be created.');
       }
       return res.status(403).json('Event capacity is full.');
     } catch (error: any) {
@@ -257,6 +258,7 @@ eventRouter.post(
     }
   }
 );
+
 //DELETE: Logout from event
 eventRouter.delete(
   '/logout',
